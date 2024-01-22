@@ -55,6 +55,39 @@ a:-webkit-any-link {
   margin-right: 8px;
   color: #FAFAFB;
 }
+#load-more-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100vh;
+}
+
+#load-more-button {
+  display: inline-flex;
+  padding: 8px 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  background: #4E75FF;
+  border-color: #4E75FF;
+  color: #FFF;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: 0.64px;
+  cursor: pointer;
+}
+
+#load-more-button:hover {
+  background: #3552c4;
+}
+
+#load-more-button:hover {
+  background: #3552c4; /* Змінюємо колір при наведенні */
+}
 
 .input:hover,
 .input:active {
