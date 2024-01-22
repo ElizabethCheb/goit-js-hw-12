@@ -83,11 +83,9 @@ a:-webkit-any-link {
 #load-more-button:hover {
   background: #3552c4;
 }
-
 #load-more-button:hover {
   background: #3552c4; /* Змінюємо колір при наведенні */
 }
-
 .input:hover,
 .input:active {
   border-color: #4E75FF;
@@ -126,7 +124,6 @@ letter-spacing: 0.64px;
   flex-wrap: wrap;
   gap: 16px; /* простір між зображеннями */
 }
-
 #gallery img {
   width: calc((100% - 32px) / 3); /* ширина одного зображення, з урахуванням простору між ними */
   height: auto; /* автоматична висота, щоб не порушувати пропорції */
