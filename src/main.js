@@ -1,71 +1,62 @@
-import iziToast from 'izitoast';
-import 'izitoast/dist/css/iziToast.min.css';
-import axios from 'axios';
-import SimpleLightbox from 'simplelightbox';
+import SimpleLightbox from "simplelightbox";
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
-let totalHits = 0;
+let lightbox;
+let currentPage = 1;
 const apiKey = '41856148-e541297002e84807a45dae6d1';
 const searchForm = document.getElementById('search-form');
 const searchInput = document.getElementById('search-input');
 const gallery = document.getElementById('gallery');
-const loadMoreButtonContainer = document.getElementById('load-more-button-container');
 const loadMoreButton = document.getElementById('load-more-button');
-let currentPage = 1;
-let lightboxInstance;
-
-loadMoreButtonContainer.style.display = 'none';
 
 searchForm.addEventListener('submit', function (event) {
   event.preventDefault();
+  const searchQuery = searchInput.value.trim();
+  currentPage = 1; // Reset page when a new search is performed
+  fetchData(searchQuery, apiKey);
+});
+
+loadMoreButton.addEventListener('click', function () {
+  currentPage++;
   const searchQuery = searchInput.value.trim();
   fetchData(searchQuery, apiKey);
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-  lightboxInstance = new SimpleLightbox('.gallery a', {});
+  lightbox = new SimpleLightbox('.gallery a', {});
 });
 
-loadMoreButton.addEventListener('click', () => {
-  loadMoreImages();
-});
+async function fetchData(searchQuery, apiKey) {
+  const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${currentPage}&per_page=40`;
 
-async function fetchData(searchQuery, apiKey, page = 1) {
-  const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`;
+  showLoadingIndicator();
 
   try {
-    showLoadingIndicator();
-    const response = await axios.get(url);
-    const data = response.data;
+    const data = await fetch(url).then(response => response.json());
 
     hideLoadingIndicator();
 
     if (data.hits.length === 0) {
       displayNoResultsMessage();
-      return;
-    }
-
-    displayImages(data.hits);
-
-    totalHits = data.totalHits || 0;
-    const perPage = 40;
-
-    if (currentPage * perPage >= totalHits) {
-      loadMoreButtonContainer.style.display = 'none';
     } else {
-      loadMoreButtonContainer.style.display = 'flex';
+      displayImages(data.hits);
+      showLoadMoreButton();
     }
   } catch (error) {
     console.error('Error fetching data:', error);
     hideLoadingIndicator();
+    displayErrorMessage('An error occurred while fetching data. Please try again.');
   }
 }
 
 function showLoadingIndicator() {
-  const loadingIndicator = document.createElement('div');
-  loadingIndicator.className = 'loading-indicator';
-  loadingIndicator.innerText = 'Loading...';
-  document.body.appendChild(loadingIndicator);
+  const loadingIndicator = document.querySelector('.loading-indicator');
+  if (!loadingIndicator) {
+    const newLoadingIndicator = document.createElement('div');
+    newLoadingIndicator.className = 'loading-indicator';
+    newLoadingIndicator.innerText = 'Loading...';
+    document.body.appendChild(newLoadingIndicator);
+  }
 }
 
 function hideLoadingIndicator() {
@@ -75,6 +66,13 @@ function hideLoadingIndicator() {
   }
 }
 
+function clearGallery() {
+  while (gallery.firstChild) {
+    gallery.removeChild(gallery.firstChild);
+  }
+}
+
+
 function displayNoResultsMessage() {
   const toastContainer = document.createElement('div');
   toastContainer.className = 'toast-container';
@@ -82,8 +80,7 @@ function displayNoResultsMessage() {
   decorativeIcon.className = 'decorative-icon';
   decorativeIcon.innerHTML = '&#9737;';
   const errorMessage = document.createElement('p');
-  errorMessage.innerText =
-    'Sorry, there are no images matching your search query. Please, try again!';
+  errorMessage.innerText = 'Sorry, there are no images matching your search query. Please, try again!';
   const closeButton = document.createElement('span');
   closeButton.className = 'close-button';
   closeButton.innerHTML = '&times;';
@@ -94,11 +91,13 @@ function displayNoResultsMessage() {
   closeButton.addEventListener('click', () => {
     toastContainer.remove();
   });
+
+  hideLoadMoreButton(); // Hide the "Load more" button when there are no results
 }
 
 function displayImages(images) {
   const fragment = document.createDocumentFragment();
-  images.forEach((image) => {
+  images.forEach(image => {
     const linkElement = document.createElement('a');
     linkElement.href = image.webformatURL;
     const imgElement = document.createElement('img');
@@ -113,51 +112,39 @@ function displayImages(images) {
     linkElement.appendChild(imgElement);
     fragment.appendChild(linkElement);
   });
+
   gallery.appendChild(fragment);
 
-  // Додавання кнопки "Завантажити ще" після зображень
-  const loadMoreButton = document.createElement('button');
-  loadMoreButton.textContent = 'Load more';
-  loadMoreButton.id = 'load-more-button';
-  loadMoreButton.addEventListener('click', loadMoreImages);
-  loadMoreButtonContainer.appendChild(loadMoreButton);
-
-  // Оновлення lightbox
-  if (lightboxInstance) {
-    lightboxInstance.refresh();
-  }
-
-  // Перевірка, чи відображати кнопку "Завантажити ще"
-  const perPage = 40;
-  if (currentPage * perPage >= totalHits) {
-    loadMoreButtonContainer.style.display = 'none';
-  } else {
-    loadMoreButtonContainer.style.display = 'flex';
+  if (lightbox) {
+    lightbox.refresh(); // Оновлення екземпляру SimpleLightbox після додавання нових зображень
   }
 }
 
-async function loadMoreImages() {
-  currentPage++;
-  const searchQuery = searchInput.value.trim();
-  await fetchData(searchQuery, apiKey, currentPage);
-  const perPage = 40;
-  console.log('Current Page:', currentPage);
-  console.log('Total Hits:', totalHits);
-  console.log('Condition:', currentPage * perPage >= totalHits);
-
-  if (currentPage * perPage >= totalHits) {
-    loadMoreButtonContainer.style.display = 'none';
-    console.log('Button should be hidden.');
-  } else {
-    loadMoreButtonContainer.style.display = 'flex';
-    console.log('Button should be visible.');
-  }
-
-  const cardHeight = gallery.firstElementChild.clientHeight;
-  window.scrollBy({ top: cardHeight * 2, behavior: 'smooth' });
+function showLoadMoreButton() {
+  loadMoreButton.style.display = 'block';
 }
 
-lightboxInstance = new SimpleLightbox('.gallery a', {
-  captionsData: 'alt',
-  captionDelay: 250,
+function hideLoadMoreButton() {
+  loadMoreButton.style.display = 'none';
+}
+
+gallery.addEventListener('click', function (event) {
+  if (event.target.tagName === 'IMG' && lightbox) {
+    lightbox.open({ elements: [event.target] });
+  }
+});
+
+// Additional styling for gallery images and links
+const galleryImages = document.querySelectorAll('.gallery img');
+galleryImages.forEach(image => {
+  image.style.width = 'calc((100% - 32px) / 3)';
+  image.style.height = 'auto';
+  image.style.marginBottom = '16px';
+});
+
+const galleryLinks = document.querySelectorAll('.gallery a');
+galleryLinks.forEach(link => {
+  link.style.width = 'calc((100% - 32px) / 3)';
+  link.style.height = 'auto';
+  link.style.marginBottom = '16px';
 });
