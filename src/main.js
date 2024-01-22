@@ -1,4 +1,4 @@
-import SimpleLightbox from "simplelightbox";
+import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
 let lightbox;
@@ -23,7 +23,8 @@ loadMoreButton.addEventListener('click', function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-  lightbox = new SimpleLightbox('.gallery a', {});
+  lightbox = new SimpleLightbox('.my-gallery-class a', {});
+
 });
 
 async function fetchData(searchQuery, apiKey) {
