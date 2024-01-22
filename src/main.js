@@ -1,6 +1,9 @@
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 import axios from 'axios';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+
 let totalHits = 0;
 const apiKey = '41856148-e541297002e84807a45dae6d1';
 const searchForm = document.getElementById('search-form');
@@ -9,61 +12,69 @@ const gallery = document.getElementById('gallery');
 const loadMoreButtonContainer = document.getElementById('load-more-button-container');
 const loadMoreButton = document.getElementById('load-more-button');
 let currentPage = 1;
+let lightboxInstance;
+
 loadMoreButtonContainer.style.display = 'none';
+
 searchForm.addEventListener('submit', function (event) {
   event.preventDefault();
   const searchQuery = searchInput.value.trim();
   fetchData(searchQuery, apiKey);
 });
+
 document.addEventListener('DOMContentLoaded', function () {
-  lightbox = new SimpleLightbox('.gallery a', {});
+  lightboxInstance = new SimpleLightbox('.gallery a', {});
 });
+
 loadMoreButton.addEventListener('click', () => {
   loadMoreImages();
 });
-function fetchData(searchQuery, apiKey, page = 1) {
+
+async function fetchData(searchQuery, apiKey, page = 1) {
   const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${page}&per_page=40`;
+
   try {
     showLoadingIndicator();
-    axios.get(url)
-    .then(response => {
-      const data = response.data;
-      hideLoadingIndicator();
-      if (data.hits.length === 0) {
-        displayNoResultsMessage();
-        return;
-      }
-      displayImages(data.hits);
+    const response = await axios.get(url);
+    const data = response.data;
+
+    hideLoadingIndicator();
+
+    if (data.hits.length === 0) {
+      displayNoResultsMessage();
+      return;
+    }
+
+    displayImages(data.hits);
+
+    totalHits = data.totalHits || 0;
+    const perPage = 40;
+
+    if (currentPage * perPage >= totalHits) {
+      loadMoreButtonContainer.style.display = 'none';
+    } else {
       loadMoreButtonContainer.style.display = 'flex';
-      totalHits = data.totalHits || 0;
-      const perPage = 40;
-      if (currentPage * perPage >= totalHits) {
-        loadMoreButtonContainer.style.display = 'none';
-      } else {
-        loadMoreButtonContainer.style.display = 'flex';
-      }
-    })
-    .catch(error => {
-      console.error('Error fetching data:', error);
-      hideLoadingIndicator();
-    });
+    }
   } catch (error) {
     console.error('Error fetching data:', error);
     hideLoadingIndicator();
   }
 }
+
 function showLoadingIndicator() {
   const loadingIndicator = document.createElement('div');
   loadingIndicator.className = 'loading-indicator';
   loadingIndicator.innerText = 'Loading...';
   document.body.appendChild(loadingIndicator);
 }
+
 function hideLoadingIndicator() {
   const loadingIndicator = document.querySelector('.loading-indicator');
   if (loadingIndicator) {
     loadingIndicator.remove();
   }
 }
+
 function displayNoResultsMessage() {
   const toastContainer = document.createElement('div');
   toastContainer.className = 'toast-container';
@@ -84,6 +95,7 @@ function displayNoResultsMessage() {
     toastContainer.remove();
   });
 }
+
 function displayImages(images) {
   const fragment = document.createDocumentFragment();
   images.forEach((image) => {
@@ -102,10 +114,28 @@ function displayImages(images) {
     fragment.appendChild(linkElement);
   });
   gallery.appendChild(fragment);
-  if (lightbox) {
-    lightbox.refresh();
+
+  // Додавання кнопки "Завантажити ще" після зображень
+  const loadMoreButton = document.createElement('button');
+  loadMoreButton.textContent = 'Load more';
+  loadMoreButton.id = 'load-more-button';
+  loadMoreButton.addEventListener('click', loadMoreImages);
+  loadMoreButtonContainer.appendChild(loadMoreButton);
+
+  // Оновлення lightbox
+  if (lightboxInstance) {
+    lightboxInstance.refresh();
+  }
+
+  // Перевірка, чи відображати кнопку "Завантажити ще"
+  const perPage = 40;
+  if (currentPage * perPage >= totalHits) {
+    loadMoreButtonContainer.style.display = 'none';
+  } else {
+    loadMoreButtonContainer.style.display = 'flex';
   }
 }
+
 async function loadMoreImages() {
   currentPage++;
   const searchQuery = searchInput.value.trim();
@@ -114,6 +144,7 @@ async function loadMoreImages() {
   console.log('Current Page:', currentPage);
   console.log('Total Hits:', totalHits);
   console.log('Condition:', currentPage * perPage >= totalHits);
+
   if (currentPage * perPage >= totalHits) {
     loadMoreButtonContainer.style.display = 'none';
     console.log('Button should be hidden.');
@@ -121,10 +152,12 @@ async function loadMoreImages() {
     loadMoreButtonContainer.style.display = 'flex';
     console.log('Button should be visible.');
   }
+
   const cardHeight = gallery.firstElementChild.clientHeight;
   window.scrollBy({ top: cardHeight * 2, behavior: 'smooth' });
 }
-const lightbox = new SimpleLightbox('.gallery a', {
+
+lightboxInstance = new SimpleLightbox('.gallery a', {
   captionsData: 'alt',
   captionDelay: 250,
 });
