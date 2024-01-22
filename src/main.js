@@ -2,7 +2,6 @@ import axios from 'axios';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 let totalHits = 0;
-let lightbox;
 const apiKey = '41856148-e541297002e84807a45dae6d1';
 const searchForm = document.getElementById('search-form');
 const searchInput = document.getElementById('search-input');
@@ -125,3 +124,7 @@ async function loadMoreImages() {
   const cardHeight = gallery.firstElementChild.clientHeight;
   window.scrollBy({ top: cardHeight * 2, behavior: 'smooth' });
 }
+const lightbox = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
