@@ -8,11 +8,12 @@ const searchInput = document.getElementById('search-input');
 const gallery = document.getElementById('gallery');
 const loadMoreButton = document.getElementById('load-more-button');
 searchForm.addEventListener('submit', function (event) {
-  event.preventDefault();
-  const searchQuery = searchInput.value.trim();
-  currentPage = 1; // Скидаємо сторінку при новому пошуку
-  fetchData(searchQuery, apiKey);
-});
+    event.preventDefault();
+    const searchQuery = searchInput.value.trim();
+    clearGallery(); // Очистити галерею перед новим запитом
+    currentPage = 1; // Скидаємо сторінку при новому пошуку
+    fetchData(searchQuery, apiKey);
+  });
 loadMoreButton.addEventListener('click', function () {
   currentPage++;
   const searchQuery = searchInput.value.trim();
