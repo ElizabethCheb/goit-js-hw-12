@@ -1,6 +1,5 @@
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-
 let lightbox;
 let currentPage = 1;
 const apiKey = '41856148-e541297002e84807a45dae6d1';
@@ -8,35 +7,70 @@ const searchForm = document.getElementById('search-form');
 const searchInput = document.getElementById('search-input');
 const gallery = document.getElementById('gallery');
 const loadMoreButton = document.getElementById('load-more-button');
-
 searchForm.addEventListener('submit', function (event) {
   event.preventDefault();
   const searchQuery = searchInput.value.trim();
-  currentPage = 1; // Reset page when a new search is performed
+  currentPage = 1; // Скидаємо сторінку при новому пошуку
   fetchData(searchQuery, apiKey);
 });
-
 loadMoreButton.addEventListener('click', function () {
   currentPage++;
   const searchQuery = searchInput.value.trim();
   fetchData(searchQuery, apiKey);
 });
-
 document.addEventListener('DOMContentLoaded', function () {
-  lightbox = new SimpleLightbox('.my-gallery-class a', {});
-
+  initializeLightbox();
 });
-
+gallery.addEventListener('click', function (event) {
+  if (event.target.tagName === 'IMG' && lightbox) {
+    openLightboxWithClickedImage(event.target);
+  }
+});
+gallery.addEventListener('mouseenter', function (event) {
+    if (event.target.tagName === 'IMG') {
+      event.target.style.transform = 'scale(1.1)';
+      document.body.style.cursor = 'pointer';
+    }
+  });
+  
+  gallery.addEventListener('mouseleave', function (event) {
+    if (event.target.tagName === 'IMG') {
+      event.target.style.transform = 'scale(1)';
+      document.body.style.cursor = 'auto';
+    }
+  });
+function initializeLightbox() {
+  lightbox = new SimpleLightbox('.gallery a', {
+    captionsData: 'alt',
+    captionDelay: 250,
+    widthRatio: 0.9,
+    heightRatio: 0.9,
+    scaleImageToRatio: true,
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && lightbox && lightbox.visible) {
+      lightbox.close();
+    }
+  });
+}
+function openLightboxWithClickedImage(clickedImage) {
+  const galleryImages = document.querySelectorAll('.gallery img');
+  const elements = Array.from(galleryImages).map(img => ({
+    src: img.src,
+    title: img.alt,
+  }));
+  const clickedImageIndex = Array.from(galleryImages).indexOf(clickedImage);
+  lightbox.open({
+    elements,
+    startIndex: clickedImageIndex,
+  });
+}
 async function fetchData(searchQuery, apiKey) {
   const url = `https://pixabay.com/api/?key=${apiKey}&q=${searchQuery}&image_type=photo&orientation=horizontal&safesearch=true&page=${currentPage}&per_page=40`;
-
   showLoadingIndicator();
-
   try {
     const data = await fetch(url).then(response => response.json());
-
     hideLoadingIndicator();
-
     if (data.hits.length === 0) {
       displayNoResultsMessage();
     } else {
@@ -49,7 +83,6 @@ async function fetchData(searchQuery, apiKey) {
     displayErrorMessage('An error occurred while fetching data. Please try again.');
   }
 }
-
 function showLoadingIndicator() {
   const loadingIndicator = document.querySelector('.loading-indicator');
   if (!loadingIndicator) {
@@ -59,21 +92,17 @@ function showLoadingIndicator() {
     document.body.appendChild(newLoadingIndicator);
   }
 }
-
 function hideLoadingIndicator() {
   const loadingIndicator = document.querySelector('.loading-indicator');
   if (loadingIndicator) {
     loadingIndicator.remove();
   }
 }
-
 function clearGallery() {
   while (gallery.firstChild) {
     gallery.removeChild(gallery.firstChild);
   }
 }
-
-
 function displayNoResultsMessage() {
   const toastContainer = document.createElement('div');
   toastContainer.className = 'toast-container';
@@ -92,10 +121,8 @@ function displayNoResultsMessage() {
   closeButton.addEventListener('click', () => {
     toastContainer.remove();
   });
-
-  hideLoadMoreButton(); // Hide the "Load more" button when there are no results
+  hideLoadMoreButton();
 }
-
 function displayImages(images) {
   const fragment = document.createDocumentFragment();
   images.forEach(image => {
@@ -113,36 +140,23 @@ function displayImages(images) {
     linkElement.appendChild(imgElement);
     fragment.appendChild(linkElement);
   });
-
   gallery.appendChild(fragment);
-
   if (lightbox) {
-    lightbox.refresh(); // Оновлення екземпляру SimpleLightbox після додавання нових зображень
+    lightbox.refresh();
   }
 }
-
 function showLoadMoreButton() {
   loadMoreButton.style.display = 'block';
 }
-
 function hideLoadMoreButton() {
   loadMoreButton.style.display = 'none';
 }
-
-gallery.addEventListener('click', function (event) {
-  if (event.target.tagName === 'IMG' && lightbox) {
-    lightbox.open({ elements: [event.target] });
-  }
-});
-
-// Additional styling for gallery images and links
 const galleryImages = document.querySelectorAll('.gallery img');
 galleryImages.forEach(image => {
   image.style.width = 'calc((100% - 32px) / 3)';
   image.style.height = 'auto';
   image.style.marginBottom = '16px';
 });
-
 const galleryLinks = document.querySelectorAll('.gallery a');
 galleryLinks.forEach(link => {
   link.style.width = 'calc((100% - 32px) / 3)';
